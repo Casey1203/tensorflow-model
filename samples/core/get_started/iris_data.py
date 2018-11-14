@@ -1,5 +1,6 @@
 import pandas as pd
 import tensorflow as tf
+import os
 
 TRAIN_URL = "http://download.tensorflow.org/data/iris_training.csv"
 TEST_URL = "http://download.tensorflow.org/data/iris_test.csv"
@@ -9,8 +10,14 @@ CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth',
 SPECIES = ['Setosa', 'Versicolor', 'Virginica']
 
 def maybe_download():
-    train_path = tf.keras.utils.get_file(TRAIN_URL.split('/')[-1], TRAIN_URL)
-    test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
+    if not os.path.exists('iris_training.csv'):
+        train_path = tf.keras.utils.get_file(TRAIN_URL.split('/')[-1], TRAIN_URL)
+    else:
+        train_path = 'iris_training.csv'
+    if not os.path.exists('iris_test.csv'):
+        test_path = tf.keras.utils.get_file(TEST_URL.split('/')[-1], TEST_URL)
+    else:
+        test_path = 'iris_test.csv'
 
     return train_path, test_path
 
