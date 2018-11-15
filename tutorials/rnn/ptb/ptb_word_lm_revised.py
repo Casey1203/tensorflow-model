@@ -107,6 +107,26 @@ class PTBModel(object):
                 "embedding", [vocab_size, size], dtype=data_type()) # vocab size * hidden size, 将单词转成embedding描述
             # 将输入seq用embedding表示, shape=[batch, steps, hidden_size]
             inputs = tf.nn.embedding_lookup(embedding, self._input_data)
+            # example:
+            # input_ids = tf.placeholder(dtype=tf.int32, shape=[None])
+            # embedding = tf.Variable(np.identity(5, dtype=np.int32))
+            # input_embedding = tf.nn.embedding_lookup(embedding, input_ids)
+            # sess.run(tf.global_variables_initializer())
+            # print embedding.eval()
+            # embedding = [[1 0 0 0 0]
+            #              [0 1 0 0 0]
+            #              [0 0 1 0 0]
+            #              [0 0 0 1 0]
+            #              [0 0 0 0 1]]
+            # print sess.run(input_embedding, feed_dict={input_ids:[1, 2, 3, 0, 3, 2, 1]})
+            # input_embedding = [[0 1 0 0 0]
+            #                    [0 0 1 0 0]
+            #                    [0 0 0 1 0]
+            #                    [1 0 0 0 0]
+            #                    [0 0 0 1 0]
+            #                    [0 0 1 0 0]
+            #                    [0 1 0 0 0]]
+
 
         if is_training and config.keep_prob < 1:
             inputs = tf.nn.dropout(inputs, config.keep_prob)
@@ -121,15 +141,15 @@ class PTBModel(object):
         #           for input_ in tf.split(1, num_steps, inputs)]
         # outputs, state = tf.nn.rnn(cell, inputs, initial_state=self._initial_state)
         outputs = []
-        state = self._initial_state # state 表示 各个batch中的状态
+        state = self._initial_state # state表示各个batch中的状态
         with tf.variable_scope("RNN"):
             for time_step in range(num_steps):
                 if time_step > 0: tf.get_variable_scope().reuse_variables()
                 # cell_out: [batch, hidden_size]
-                (cell_output, state) = cell(inputs[:, time_step, :], state)
+                (cell_output, state) = cell(inputs[:, time_step, :], state) # 一次输入一个batch，共20个单词《在t时刻的向量，共200维
                 outputs.append(cell_output)  # output: shape[num_steps][batch,hidden_size]
 
-        # 把之前的list展开，成[batch, hidden_size*num_steps],然后 reshape, 成[batch*numsteps, hidden_size]
+        # 把之前的list展开，成[batch, hidden_size*num_steps],然后reshape, 成[batch*numsteps, hidden_size]
         output = tf.reshape(tf.concat(outputs, 1), [-1, size])
 
         # softmax_w , shape=[hidden_size, vocab_size], 用于将distributed表示的单词转化为one-hot表示
